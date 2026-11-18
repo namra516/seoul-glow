@@ -7,7 +7,7 @@ function ProductDetails({ updateCartCount, darkMode }) {
   const [featuredProducts, setFeaturedProducts] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:3000/products")
+fetch("https://seoul-glow.onrender.com/products")
       .then((response) => response.json())
       .then((data) => setFeaturedProducts(data))
       .catch((error) => console.error("Error fetching products:", error));
