@@ -8,6 +8,10 @@ import ProductCard from "./components/ProductCard";
 import ProductDetails from "./components/ProductDetails";
 import Cart from "./components/Cart";
 import Checkout from "./components/Checkout";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import AdminDashboard from "./components/AdminDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const categories = [
   "All Products",
@@ -500,10 +504,17 @@ function App() {
           }
         />
         <Route path="/cart" element={<Cart darkMode={darkMode} />} />{" "}
+        <Route path="/checkout" element={<Checkout darkMode={darkMode} />} />{" "}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route
-          path="/checkout"
-          element={<Checkout darkMode={darkMode} />}
-        />{" "}
+          path="/admin"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </>
   );
