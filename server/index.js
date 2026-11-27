@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
@@ -11,12 +12,16 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173",
-       "https://seoul-glow-six.vercel.app"],
+    origin: [
+      "http://localhost:5173",
+      "https://seoul-glow-six.vercel.app",
+    ],
+    credentials: true,
   }),
 );
 
 app.use(express.json());
+app.use(cookieParser());
 app.use((req, res, next) => {
   console.log("REQUEST:", req.method, req.url);
   next();
@@ -35,9 +40,10 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model("User", userSchema);
+
 const verifyAdmin = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = req.cookies.token;
 
     if (!token) {
       return res.status(401).json({ message: "Not authenticated." });
@@ -61,7 +67,9 @@ const verifyAdmin = async (req, res, next) => {
   }
 };
 
+
 // Register customer
+
 app.post("/api/auth/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -89,6 +97,19 @@ app.post("/api/auth/register", async (req, res) => {
       role: "customer",
     });
 
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
     res.status(201).json({
       message: "Registration successful.",
       user: {
@@ -99,13 +120,14 @@ app.post("/api/auth/register", async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("REGISTER ERROR:", error);
     res.status(500).json({ message: "Registration failed." });
   }
 });
 
+
 // Login
 app.post("/api/auth/login", async (req, res) => {
-  console.log("LOGIN ROUTE REACHED");
   try {
     const { email, password } = req.body;
 
@@ -123,9 +145,15 @@ app.post("/api/auth/login", async (req, res) => {
       { expiresIn: "1d" },
     );
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
     res.json({
       message: "Login successful.",
-      token,
       user: {
         id: user._id,
         name: user.name,
@@ -140,9 +168,10 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 // Verify logged-in user
+
 app.get("/api/auth/me", async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = req.cookies.token;
 
     if (!token) {
       return res.status(401).json({ message: "Not authenticated." });
@@ -160,6 +189,19 @@ app.get("/api/auth/me", async (req, res) => {
     res.status(401).json({ message: "Invalid or expired token." });
   }
 });
+
+// Logout
+app.post("/api/auth/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    path: "/",
+  });
+
+  res.json({ message: "Logged out successfully." });
+});
+
 
 // Admin-only route
 app.get("/api/admin/dashboard", verifyAdmin, (req, res) => {
