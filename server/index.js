@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import Product from "./Product.js";
 
 dotenv.config();
 
@@ -201,6 +202,114 @@ app.post("/api/auth/logout", (req, res) => {
 
   res.json({ message: "Logged out successfully." });
 });
+
+// Get all products
+app.get("/api/products", async (req, res) => {
+  try {
+    const products = await Product.find().sort({ id: 1 });
+    res.json(products);
+  } catch (error) {
+    console.error("GET PRODUCTS ERROR:", error);
+    res.status(500).json({ message: "Failed to fetch products." });
+  }
+});
+
+// Add product (Admin only)
+app.post("/api/products", verifyAdmin, async (req, res) => {
+  try {
+    const lastProduct = await Product.findOne().sort({ id: -1 });
+    const newId = lastProduct ? lastProduct.id + 1 : 1;
+
+    const product = await Product.create({
+      ...req.body,
+      id: newId,
+    });
+
+    res.status(201).json({
+      message: "Product added successfully.",
+      product,
+    });
+  } catch (error) {
+    console.error("ADD PRODUCT ERROR:", error);
+    res.status(500).json({ message: "Failed to add product." });
+  }
+});
+
+
+// Add product (Admin only)
+app.post("/api/products", verifyAdmin, async (req, res) => {
+  try {
+    const lastProduct = await Product.findOne().sort({ id: -1 });
+    const newId = lastProduct ? lastProduct.id + 1 : 1;
+
+    const product = await Product.create({
+      ...req.body,
+      id: newId,
+    });
+
+    res.status(201).json({
+      message: "Product added successfully.",
+      product,
+    });
+  } catch (error) {
+    console.error("ADD PRODUCT ERROR:", error);
+    res.status(500).json({ message: "Failed to add product." });
+  }
+});
+
+
+// Update product (Admin only)
+app.put("/api/products/:id", verifyAdmin, async (req, res) => {
+  try {
+    const product = await Product.findOneAndUpdate(
+      { id: Number(req.params.id) },
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found."
+      });
+    }
+
+    res.json({
+      message: "Product updated successfully.",
+      product
+    });
+  } catch (error) {
+    console.error("UPDATE PRODUCT ERROR:", error);
+    res.status(500).json({
+      message: "Failed to update product."
+    });
+  }
+});
+
+
+// Delete product (Admin only)
+app.delete("/api/products/:id", verifyAdmin, async (req, res) => {
+  try {
+    const product = await Product.findOneAndDelete({
+      id: Number(req.params.id)
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found."
+      });
+    }
+
+    res.json({
+      message: "Product deleted successfully."
+    });
+  } catch (error) {
+    console.error("DELETE PRODUCT ERROR:", error);
+    res.status(500).json({
+      message: "Failed to delete product."
+    });
+  }
+});
+
 
 
 // Admin-only route

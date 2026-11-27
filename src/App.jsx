@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "./context/AuthContext";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { FiSearch, FiShoppingBag, FiMenu, FiArrowRight } from "react-icons/fi";
 import { ToastContainer } from "react-toastify";
@@ -25,6 +26,8 @@ const categories = [
 
 function App() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  console.log("Navbar user:", user);
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [featuredProducts, setFeaturedProducts] = useState([]);
 
@@ -42,7 +45,7 @@ function App() {
   });
 
   useEffect(() => {
-    fetch("https://seoul-glow.onrender.com/products")
+    fetch("https://seoul-glow-1.onrender.com/api/products")
       .then((response) => response.json())
       .then((data) => setFeaturedProducts(data))
       .catch((error) => console.error("Error fetching products:", error));
@@ -170,6 +173,48 @@ function App() {
                     >
                       {darkMode ? "☀️" : "🌙"}
                     </button>
+
+                    {user && (
+                      <div
+                        className={`flex items-center gap-3 rounded-2xl border px-3 py-2 shadow-sm transition ${
+                          darkMode
+                            ? "border-stone-700 bg-stone-900"
+                            : "border-rose-100 bg-white"
+                        }`}
+                      >
+                        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-base font-bold text-rose-600">
+                          {user.name?.charAt(0).toUpperCase()}
+                          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500"></span>
+                        </div>
+
+                        <div className="hidden sm:block min-w-0">
+                          <p
+                            className={`text-sm font-semibold ${
+                              darkMode ? "text-white" : "text-stone-800"
+                            }`}
+                          >
+                            {user.name}
+                          </p>
+                          <p className="max-w-32 truncate text-xs text-stone-500">
+                            {user.email}
+                          </p>
+                          <span className="mt-1 inline-block rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-600">
+                            {user.role}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await logout();
+                            navigate("/");
+                          }}
+                          className="rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50"
+                        >
+                          Logout
+                        </button>
+                      </div>
+                    )}
 
                     <button
                       type="button"
